@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DREVSMP – Opsucht Community</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ════════ RESET & ROOT ════════ */
+:root {
+  --bg:      #06060e;
+  --bg1:     #0c0c18;
+  --bg2:     #111124;
+  --bg3:     #181830;
+  --bg4:     #20203c;
+  --bg5:     #282848;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+
+  --gold:    #f0a500;
+  --gold2:   #ff8c00;
+  --gold-dim:#7a5200;
+  --green:   #22c55e;
+  --green2:  #16a34a;
+  --red:     #ef4444;
+  --red2:    #dc2626;
+  --blue:    #3b82f6;
+  --purple:  #a855f7;
+  --cyan:    #06b6d4;
+  --diamond: #4dd5ff;
+
+  --text:    #e2e8f0;
+  --text2:   #94a3b8;
+  --text3:   #64748b;
+
+  --radius:  6px;
+  --radius2: 10px;
+  --glow-g:  0 0 20px rgba(34,197,94,0.3);
+  --glow-gold: 0 0 20px rgba(240,165,0,0.35);
+  --glow-red:  0 0 16px rgba(239,68,68,0.4);
+}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* animated grid bg */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,197,94,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none;
+}
+body::after {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(34,197,94,0.08) 0%, transparent 60%);
+  pointer-events:none;
+}
+
+/* ════════ UTILITIES ════════ */
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+.z1 { position:relative; z-index:1; }
+
+.pixel { font-family:'Press Start 2P', monospace; }
+.glow-g { text-shadow: 0 0 20px rgba(34,197,94,0.7); }
+.glow-gold { text-shadow: 0 0 20px rgba(240,165,0,0.6); }
+
+.d-none { display:none !important; }
+
+/* ════════ SCREEN SYSTEM ════════ */
+.screen { display:none; }
+.screen.active { display:flex; }
+
+/* ════════════════════════════════
+   AUTH
+════════════════════════════════ */
+#authScreen.active {
+  min-height:100vh;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  position:relative;
+  z-index:1;
+}
+
+.auth-hero {
+  text-align:center;
+  margin-bottom:36px;
+}
+
+.auth-logo {
+  display:inline-flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:10px;
+}
+
+.logo-icon {
+  width:56px; height:56px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px;
+  box-shadow: 0 0 30px rgba(34,197,94,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  flex-shrink:0;
+  position:relative;
+  overflow:hidden;
+}
+.logo-icon::before {
+  content:'⛏';
+  position:absolute;
+  font-size:22px;
+  filter: drop-shadow(0 0 6px rgba(0,0,0,0.8));
+}
+
+.logo-wordmark {
+  text-align:left;
+}
+.logo-main {
+  font-family:'Press Start 2P', monospace;
+  font-size:24px;
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1.2;
+  filter: drop-shadow(0 0 15px rgba(34,197,94,0.5));
+}
+.logo-sub {
+  font-family:'Press Start 2P', monospace;
+  font-size:8px;
+  color:var(--gold);
+  letter-spacing:2px;
+  margin-top:4px;
+}
+
+.auth-tagline {
+  color:var(--text2);
+  font-size:14px;
+  margin-top:8px;
+}
+.auth-tagline span { color:var(--green); font-weight:600; }
+
+/* Auth box */
+.auth-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius2);
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,0.1),
+    0 20px 60px rgba(0,0,0,0.7),
+    0 0 80px rgba(34,197,94,0.05);
+  position:relative;
+  overflow:hidden;
+}
+.auth-box::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+}
+
+.auth-tabs {
+  display:flex;
+  background:var(--bg3);
+  border-radius: var(--radius);
+  padding:4px;
+  margin-bottom:24px;
+  gap:4px;
+}
+.auth-tab {
+  flex:1;
+  background:transparent;
+  border:none;
+  color:var(--text3);
+  font-family:'Inter', sans-serif;
+  font-size:13px;
+  font-weight:600;
+  padding:9px;
+  cursor:pointer;
+  border-radius:4px;
+  transition:all 0.2s;
+  letter-spacing:0.3px;
+}
+.auth-tab.active { background:var(--bg5); color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+.auth-tab:hover:not(.active) { color:var(--text2); }
+
+.auth-form { display:none; }
+.auth-form.active { display:block; }
+
+/* Fields */
+.field { margin-bottom:16px; }
+.field-label {
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:7px;
+}
+input[type=text], input[type=password], input[type=number] {
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  color:var(--text);
+  font-family:'Inter', sans-serif;
+  font-size:15px;
+  font-weight:500;
+  padding:12px 14px;
+  outline:none;
+  transition:all 0.2s;
+}
+input:focus {
+  border-color: rgba(34,197,94,0.5);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+  background:var(--bg4);
+}
+input::placeholder { color:var(--text3); }
+
+.auth-msg {
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+  margin-top:12px;
+  padding:9px 14px;
+  border-radius:var(--radius);
+  display:none;
+}
+.auth-msg.err { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:var(--red); display:block; }
+.auth-msg.ok  { background:rgba(34,197,94,0.1);  border:1px solid rgba(34,197,94,0.3);  color:var(--green); display:block; }
+
+/* ════════ BUTTONS ════════ */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:11px 18px;
+  border:none; border-radius:var(--radius);
+  font-family:'Inter', sans-serif;
+  font-size:14px; font-weight:700;
+  cursor:pointer;
+  transition:all 0.18s;
+  letter-spacing:0.3px;
+  white-space:nowrap;
+  text-decoration:none;
+  position:relative;
+  overflow:hidden;
+}
+.btn::after {
+  content:'';
+  position:absolute; inset:0;
+  background:rgba(255,255,255,0);
+  transition:background 0.18s;
+}
+.btn:hover::after { background:rgba(255,255,255,0.07); }
+.btn:active { transform:scale(0.97); }
+.btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color:#fff;
+  width:100%;
+  box-shadow: 0 4px 14px rgba(34,197,94,0.35);
+  font-size:15px; padding:13px;
+}
+.btn-primary:hover { box-shadow:0 4px 20px rgba(34,197,94,0.55); }
+
+.btn-gold   { background:linear-gradient(135deg,#f0a500,#cc7a00); color:#000; box-shadow:0 4px 14px rgba(240,165,0,0.3); }
+.btn-red    { background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; box-shadow:0 4px 14px rgba(239,68,68,0.25); }
+.btn-purple { background:linear-gradient(135deg,#a855f7,#7c3aed); color:#fff; box-shadow:0 4px 14px rgba(168,85,247,0.25); }
+.btn-blue   { background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; }
+.btn-ghost  { background:var(--bg4); color:var(--text2); border:1px solid var(--border2); }
+.btn-ghost:hover { color:var(--text); border-color:var(--border2); }
+.btn-danger { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background:rgba(239,68,68,0.25); }
+
+.btn-sm { padding:7px 14px; font-size:13px; }
+.btn-xs { padding:5px 10px; font-size:12px; }
+
+/* ════════════════════════════════
+   APP LAYOUT
+════════════════════════════════ */
+#appScreen.active {
+  flex-direction:column;
+  min-height:100vh;
+  position:relative;
+  z-index:1;
+}
+
+/* ── NAVBAR ── */
+.navbar {
+  background:rgba(12,12,24,0.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border2);
+  padding:0 20px;
+  display:flex;
+  align-items:center;
+  height:58px;
+  position:sticky; top:0; z-index:200;
+  gap:6px;
+}
+
+.nav-brand {
+  display:flex; align-items:center; gap:9px;
+  margin-right:12px;
+  text-decoration:none;
+  flex-shrink:0;
+}
+.nav-brand-icon {
+  width:32px; height:32px;
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+  box-shadow: 0 0 12px rgba(34,197,94,0.4);
+}
+.nav-brand-text {
+  font-family:'Press Start 2P', monospace;
+  font-size:11px;
+  color:#22c55e;
+  filter:drop-shadow(0 0 8px rgba(34,197,94,0.5));
+}
+
+.nav-links { display:flex; gap:2px; flex:1; overflow-x:auto; }
+.nav-links::-webkit-scrollbar { display:none; }
+
+.nav-link {
+  background:none; border:none;
+  color:var(--text3);
+  font-family:'Inter', sans-serif;
+  font-size:13px; font-weight:600;
+  padding:6px 12px;
+  cursor:pointer;
+  border-radius:var(--radius);
+  transition:all 0.15s;
+  white-space:nowrap;
+  letter-spacing:0.2px;
+}
+.nav-link:hover { background:var(--bg3); color:var(--text2); }
+.nav-link.active {
+  background:rgba(34,197,94,0.12);
+  color:#22c55e;
+  box-shadow:inset 0 0 0 1px rgba(34,197,94,0.2);
+}
+
+.nav-right {
+  display:flex; align-items:center; gap:8px;
+  margin-left:auto; flex-shrink:0;
+}
+
+.bal-chip {
+  background:rgba(240,165,0,0.1);
+  border:1px solid rgba(240,165,0,0.3);
+  border-radius:20px;
+  padding:6px 14px;
+  font-size:14px; font-weight:700;
+  color:var(--gold);
+  font-variant-numeric:tabular-nums;
+}
+
+.user-chip {
+  display:flex; align-items:center; gap:7px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:5px 14px 5px 8px;
+}
+.user-avatar {
+  width:26px; height:26px;
+  background:linear-gradient(135deg,var(--bg5),var(--bg4));
+  border-radius:50%;
+  border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px;
+}
+.user-name { font-size:13px; font-weight:600; color:var(--text); }
+
+.btn-logout {
+  background:none; border:1px solid var(--border);
+  border-radius:var(--radius);
+  color:var(--text3);
+  font-family:'Inter', sans-serif;
+  font-size:12px; font-weight:600;
+  padding:6px 12px; cursor:pointer;
+  transition:all 0.15s;
+}
+.btn-logout:hover { border-color:rgba(239,68,68,0.4); color:var(--red); }
+
+/* ── PAGES ── */
+.page { display:none; padding:28px 22px; max-width:1100px; margin:0 auto; width:100%; }
+.page.active { display:block; }
+
+.page-header {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:24px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.page-icon {
+  width:40px; height:40px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.page-title {
+  font-family:'Press Start 2P', monospace;
+  font-size:11px;
+  color:var(--text);
+  letter-spacing:1px;
+}
+.page-desc { font-size:13px; color:var(--text3); margin-top:3px; }
+
+/* ── CARDS ── */
+.card {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius2);
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--border2), transparent);
+}
+
+.card-title {
+  font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:1.5px;
+  color:var(--text3);
+  margin-bottom:14px;
+}
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius2);
+  padding:20px;
+  text-align:center;
+  transition:border-color 0.2s, box-shadow 0.2s;
+  position:relative;
+  overflow:hidden;
+}
+.stat-card:hover { border-color:var(--border2); box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.stat-val {
+  font-family:'Press Start 2P', monospace;
+  font-size:17px;
+  color:var(--gold);
+  margin-bottom:8px;
+  line-height:1.4;
+}
+.stat-lbl { font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.stat-card.green .stat-val { color:var(--green); }
+.stat-card.blue .stat-val  { color:var(--diamond); }
+
+/* ════════════════════════════════
+   HOME
+════════════════════════════════ */
+.welcome-banner {
+  background:linear-gradient(135deg, rgba(34,197,94,0.07) 0%, rgba(6,182,212,0.05) 50%, transparent 100%);
+  border:1px solid rgba(34,197,94,0.2);
+  border-radius:var(--radius2);
+  padding:24px;
+  margin-bottom:20px;
+  position:relative; overflow:hidden;
+}
+.welcome-banner::before {
+  content:'⛏🏠🎮';
+  position:absolute; right:20px; top:50%;
+  transform:translateY(-50%);
+  font-size:40px; opacity:0.08;
+  letter-spacing:4px;
+}
+.welcome-banner h2 { font-family:'Press Start 2P', monospace; font-size:12px; color:#22c55e; margin-bottom:8px; }
+.welcome-banner p { font-size:14px; color:var(--text2); line-height:1.7; }
+.welcome-banner strong { color:var(--gold); }
+
+/* ════════════════════════════════
+   CASINO
+════════════════════════════════ */
+.casino-gate {
+  text-align:center; padding:60px 24px;
+  border:1px solid rgba(239,68,68,0.2);
+  border-radius:var(--radius2);
+  background:rgba(239,68,68,0.04);
+}
+.casino-gate .gate-icon { font-size:56px; margin-bottom:16px; }
+.casino-gate h3 { font-family:'Press Start 2P', monospace; font-size:12px; color:var(--red); margin-bottom:10px; }
+.casino-gate p { color:var(--text2); font-size:14px; line-height:1.7; }
+.casino-gate .clan-name { color:var(--gold); font-weight:700; }
+
+.slots-wrap {
+  max-width:520px; margin:0 auto;
+}
+.slots-machine {
+  background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);
+  border:1px solid rgba(240,165,0,0.3);
+  border-radius:14px;
+  padding:30px;
+  text-align:center;
+  box-shadow:
+    0 0 0 1px rgba(240,165,0,0.1),
+    0 0 40px rgba(240,165,0,0.1),
+    0 20px 60px rgba(0,0,0,0.5);
+  position:relative; overflow:hidden;
+}
+.slots-machine::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.slots-header {
+  font-family:'Press Start 2P', monospace;
+  font-size:13px; color:var(--gold);
+  filter:drop-shadow(0 0 10px rgba(240,165,0,0.5));
+  margin-bottom:6px;
+}
+.slots-sub { font-size:12px; color:var(--text3); margin-bottom:22px; }
+
+.reels-row {
+  display:flex; justify-content:center; gap:12px; margin:20px 0;
+}
+.reel {
+  width:96px; height:96px;
+  background:var(--bg);
+  border:2px solid var(--border2);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:44px;
+  transition:border-color 0.3s, box-shadow 0.3s;
+  position:relative; overflow:hidden;
+}
+.reel::after {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 40%,transparent 60%,rgba(0,0,0,0.15) 100%);
+  pointer-events:none;
+}
+.reel.spin  { animation:reel-flip 0.08s ease-in-out infinite; }
+.reel.win   { border-color:var(--green); box-shadow:0 0 16px rgba(34,197,94,0.4); }
+.reel.lose  { border-color:rgba(239,68,68,0.4); }
+.reel.jackpot { border-color:var(--gold); box-shadow:0 0 20px rgba(240,165,0,0.6), 0 0 40px rgba(240,165,0,0.3); animation:jackpot-pulse 0.5s ease infinite; }
+
+@keyframes reel-flip {
+  0%   { transform:scaleY(1); }
+  50%  { transform:scaleY(0.88); opacity:0.7; }
+  100% { transform:scaleY(1); }
+}
+@keyframes jackpot-pulse {
+  0%,100% { box-shadow:0 0 20px rgba(240,165,0,0.6); }
+  50%     { box-shadow:0 0 40px rgba(240,165,0,0.9),0 0 60px rgba(240,165,0,0.4); }
+}
+
+.bet-controls {
+  display:flex; flex-direction:column; gap:10px; margin-bottom:16px;
+}
+.bet-presets {
+  display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+}
+.bet-current {
+  font-size:14px; font-weight:700; color:var(--text2);
+}
+.bet-current span { color:var(--gold); font-size:17px; font-family:'Press Start 2P', monospace; }
+
+.spin-btn {
+  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  border:none; border-radius:var(--radius);
+  color:#000; font-family:'Inter', sans-serif;
+  font-size:16px; font-weight:800;
+  padding:15px; width:100%; cursor:pointer;
+  letter-spacing:1px; text-transform:uppercase;
+  box-shadow:0 4px 20px rgba(240,165,0,0.4);
+  transition:all 0.18s;
+  position:relative; overflow:hidden;
+}
+.spin-btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0); transition:0.18s; }
+.spin-btn:hover::after { background:rgba(255,255,255,0.1); }
+.spin-btn:active { transform:scale(0.97); }
+.spin-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.slot-result {
+  min-height:32px; margin:14px 0;
+  font-family:'Press Start 2P', monospace;
+  font-size:11px; line-height:1.8;
+}
+.slot-result.win  { color:var(--green); filter:drop-shadow(0 0 8px rgba(34,197,94,0.5)); }
+.slot-result.lose { color:var(--red); }
+.slot-result.jp   { color:var(--gold); filter:drop-shadow(0 0 12px rgba(240,165,0,0.7)); animation:jackpot-pulse 0.5s ease infinite; }
+
+.paytable {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px; margin-top:16px; text-align:left;
+}
+.pt-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text3); margin-bottom:10px; }
+.pt-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:13px;
+}
+.pt-row:last-child { border:none; }
+.pt-mult { color:var(--gold); font-weight:700; font-family:'Press Start 2P', monospace; font-size:10px; }
+.pt-jackpot .pt-mult { color:var(--gold); filter:drop-shadow(0 0 6px rgba(240,165,0,0.6)); }
+
+/* ════════════════════════════════
+   QUIZ
+════════════════════════════════ */
+.quiz-outer { max-width:680px; margin:0 auto; }
+
+.quiz-top {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:20px;
+}
+.diff-pill {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 14px; border-radius:20px;
+  font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+}
+.diff-easy   { background:rgba(34,197,94,0.12);  color:var(--green);  border:1px solid rgba(34,197,94,0.3); }
+.diff-medium { background:rgba(240,165,0,0.12);  color:var(--gold);   border:1px solid rgba(240,165,0,0.3); }
+.diff-hard   { background:rgba(239,68,68,0.12);  color:var(--red);    border:1px solid rgba(239,68,68,0.3); }
+
+.reward-badge {
+  font-family:'Press Start 2P', monospace;
+  font-size:11px; color:var(--gold);
+  background:rgba(240,165,0,0.08);
+  border:1px solid rgba(240,165,0,0.2);
+  border-radius:20px; padding:5px 14px;
+}
+
+.cat-tag {
+  font-size:11px; color:var(--text3); font-weight:600;
+  text-transform:uppercase; letter-spacing:1px;
+}
+
+.q-card {
+  background:var(--bg2); border:1px solid var(--border2);
+  border-radius:var(--radius2); padding:28px;
+  position:relative; overflow:hidden;
+  transition:border-color 0.3s;
+}
+.q-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, rgba(34,197,94,0.4), transparent);
+}
+
+.q-text {
+  font-size:18px; font-weight:700;
+  color:var(--text); line-height:1.6;
+  margin-bottom:22px;
+}
+
+.answers {
+  display:grid; grid-template-columns:1fr 1fr; gap:9px;
+}
+.ans-btn {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius); color:var(--text);
+  font-family:'Inter', sans-serif;
+  font-size:14px; font-weight:600;
+  padding:14px 16px; cursor:pointer;
+  transition:all 0.18s; text-align:left; line-height:1.5;
+  position:relative; overflow:hidden;
+}
+.ans-btn::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0); transition:0.18s; }
+.ans-btn:hover:not(:disabled) { border-color:rgba(34,197,94,0.4); background:var(--bg4); }
+.ans-btn:hover:not(:disabled)::before { background:rgba(34,197,94,0.04); }
+.ans-btn.correct { border-color:var(--green); background:rgba(34,197,94,0.1); color:var(--green); }
+.ans-btn.wrong   { border-color:var(--red);   background:rgba(239,68,68,0.1);   color:var(--red); }
+.ans-btn:disabled { cursor:default; }
+
+.q-result {
+  text-align:center; margin-top:18px;
+  font-family:'Press Start 2P', monospace; font-size:11px;
+  min-height:24px; line-height:1.8;
+}
+.q-result.win  { color:var(--green); filter:drop-shadow(0 0 6px rgba(34,197,94,0.4)); }
+.q-result.lose { color:var(--red); }
+
+.q-stats {
+  display:flex; gap:14px; margin-top:16px;
+  justify-content:center;
+}
+.q-stat-item { font-size:12px; color:var(--text3); }
+.q-stat-item span { font-weight:700; color:var(--text); }
+
+.cooldown-box {
+  text-align:center; padding:16px;
+  background:rgba(240,165,0,0.06);
+  border:1px solid rgba(240,165,0,0.2);
+  border-radius:var(--radius); margin-top:14px;
+  font-size:13px; color:var(--text3);
+}
+.cooldown-box .cd-timer { color:var(--gold); font-weight:700; }
+
+/* ════════════════════════════════
+   WITHDRAW
+════════════════════════════════ */
+.wd-card { max-width:480px; margin:0 auto; }
+
+.wd-info {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px;
+  margin-bottom:18px; font-size:14px; color:var(--text2); line-height:1.8;
+}
+.wd-info .val { color:var(--gold); font-weight:700; }
+.wd-info .val-green { color:var(--green); font-weight:700; }
+
+.pending-box {
+  background:rgba(240,165,0,0.06);
+  border:1px solid rgba(240,165,0,0.3);
+  border-radius:var(--radius2); padding:24px; text-align:center;
+}
+.pending-box h3 { font-family:'Press Start 2P', monospace; font-size:10px; color:var(--gold); margin-bottom:12px; }
+.pending-box p { color:var(--text2); font-size:14px; line-height:1.7; }
+
+/* ════════════════════════════════
+   RULES
+════════════════════════════════ */
+.rules-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.rule-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius2); padding:20px;
+  position:relative; overflow:hidden;
+}
+.rule-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+}
+.rule-card.green::before { background:var(--green); }
+.rule-card.red::before   { background:var(--red); }
+.rule-card.gold::before  { background:var(--gold); }
+.rule-card.blue::before  { background:var(--blue); }
+.rule-card.purple::before{ background:var(--purple); }
+
+.rule-title {
+  font-size:13px; font-weight:800;
+  text-transform:uppercase; letter-spacing:1px;
+  margin-bottom:10px;
+  display:flex; align-items:center; gap:8px;
+}
+.rule-card.green .rule-title  { color:var(--green); }
+.rule-card.red .rule-title    { color:var(--red); }
+.rule-card.gold .rule-title   { color:var(--gold); }
+.rule-card.blue .rule-title   { color:var(--blue); }
+.rule-card.purple .rule-title { color:var(--purple); }
+
+.rule-list { list-style:none; }
+.rule-list li {
+  font-size:13px; color:var(--text2); line-height:1.7;
+  padding:3px 0; padding-left:16px; position:relative;
+}
+.rule-list li::before { content:'▸'; position:absolute; left:0; color:var(--text3); font-size:11px; top:5px; }
+
+/* ════════════════════════════════
+   INFO
+════════════════════════════════ */
+.info-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius2); padding:22px; margin-bottom:12px;
+}
+.info-card h3 {
+  font-size:14px; font-weight:800; text-transform:uppercase;
+  letter-spacing:1px; color:var(--text); margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.info-card ul { padding-left:18px; }
+.info-card li { color:var(--text2); font-size:14px; line-height:1.8; }
+.info-link { color:var(--green); text-decoration:none; font-weight:600; }
+.info-link:hover { text-decoration:underline; }
+
+/* ════════════════════════════════
+   OWNER PANEL
+════════════════════════════════ */
+.owner-section {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius2); padding:20px; margin-bottom:14px;
+  position:relative; overflow:hidden;
+}
+.owner-section::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(168,85,247,0.4),transparent);
+}
+.owner-sect-title {
+  font-family:'Press Start 2P', monospace;
+  font-size:9px; color:var(--purple);
+  letter-spacing:1px; margin-bottom:14px;
+}
+
+.form-row {
+  display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;
+}
+.form-row .field { flex:1; min-width:130px; margin-bottom:0; }
+
+.player-tbl {
+  width:100%; border-collapse:collapse; font-size:13px;
+}
+.player-tbl th {
+  background:var(--bg3); color:var(--text3);
+  text-align:left; padding:10px 12px;
+  font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.8px;
+  border-bottom:1px solid var(--border2);
+}
+.player-tbl td {
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+.player-tbl tr:last-child td { border-bottom:none; }
+.player-tbl tr:hover td { background:rgba(255,255,255,0.02); }
+
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 9px; border-radius:12px;
+  font-size:11px; font-weight:700;
+  margin:1px 2px;
+}
+.badge-owner  { background:rgba(240,165,0,0.15); color:var(--gold); border:1px solid rgba(240,165,0,0.3); }
+.badge-clan   { background:rgba(168,85,247,0.15); color:var(--purple); border:1px solid rgba(168,85,247,0.3); }
+.badge-banned { background:rgba(239,68,68,0.15);  color:var(--red);   border:1px solid rgba(239,68,68,0.3); }
+
+.tbl-acts { display:flex; gap:5px; flex-wrap:wrap; }
+
+.owner-denied {
+  text-align:center; padding:70px 24px;
+}
+.owner-denied h2 {
+  font-family:'Press Start 2P', monospace;
+  font-size:13px; color:var(--red); margin-bottom:10px;
+}
+.owner-denied p { color:var(--text3); font-size:14px; }
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+#toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--bg3); border:1px solid var(--border2);
+  border-radius:var(--radius);
+  padding:13px 18px;
+  font-size:14px; font-weight:600;
+  z-index:9999;
+  opacity:0; transform:translateY(10px) scale(0.97);
+  transition:all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  max-width:320px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.6);
+  pointer-events:none;
+  display:flex; align-items:center; gap:9px;
+}
+#toast.show { opacity:1; transform:translateY(0) scale(1); }
+#toast.ts { border-color:rgba(34,197,94,0.4);  color:var(--green); }
+#toast.te { border-color:rgba(239,68,68,0.4);  color:var(--red); }
+#toast.ti { border-color:rgba(240,165,0,0.4);  color:var(--gold); }
+.toast-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+#toast.ts .toast-dot { background:var(--green); box-shadow:0 0 6px rgba(34,197,94,0.6); }
+#toast.te .toast-dot { background:var(--red);   box-shadow:0 0 6px rgba(239,68,68,0.6); }
+#toast.ti .toast-dot { background:var(--gold);  box-shadow:0 0 6px rgba(240,165,0,0.6); }
+
+/* ════════ RESPONSIVE ════════ */
+@media(max-width:680px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns:1fr; }
+  .answers { grid-template-columns:1fr; }
+  .rules-grid { grid-template-columns:1fr; }
+  .reels-row { gap:8px; }
+  .reel { width:80px; height:80px; font-size:36px; }
+  .nav-brand-text { display:none; }
+  .user-chip .user-name { display:none; }
+  .page { padding:18px 14px; }
+}
+@media(max-width:440px) {
+  .reel { width:70px; height:70px; font-size:30px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════ -->
+<div id="authScreen" class="screen">
+  <div class="auth-hero">
+    <div class="auth-logo">
+      <div class="logo-icon"></div>
+      <div class="logo-wordmark">
+        <div class="logo-main">DREVSMP</div>
+        <div class="logo-sub">OPSUCHT COMMUNITY</div>
+      </div>
+    </div>
+    <div class="auth-tagline">Willkommen! <span>Registriere dich</span> und starte mit <span>$1.000</span>!</div>
+  </div>
+
+  <div class="auth-box">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">🔑 Einloggen</button>
+      <button class="auth-tab" onclick="switchTab('register')">📝 Registrieren</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-form active" id="fLogin">
+      <div class="field">
+        <label class="field-label">Ingame-Username (MC-Name)</label>
+        <input type="text" id="lUser" placeholder="Dein Minecraft-Name" autocomplete="username">
+      </div>
+      <div class="field">
+        <label class="field-label">Passwort</label>
+        <input type="password" id="lPass" placeholder="Passwort eingeben" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">▶ &nbsp;Einloggen</button>
+      <div class="auth-msg" id="lMsg"></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-form" id="fRegister">
+      <div class="field">
+        <label class="field-label">Ingame-Username (MC-Name)</label>
+        <input type="text" id="rUser" placeholder="Dein Minecraft-Name" autocomplete="username">
+      </div>
+      <div class="field">
+        <label class="field-label">Passwort</label>
+        <input type="password" id="rPass" placeholder="Mind. 6 Zeichen" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label class="field-label">Passwort bestätigen</label>
+        <input type="password" id="rPass2" placeholder="Passwort wiederholen" autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">✅ &nbsp;Account erstellen</button>
+      <div class="auth-msg" id="rMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     APP SCREEN
+═══════════════════════════════ -->
+<div id="appScreen" class="screen">
+
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">⛏</div>
+      <div class="nav-brand-text">DREVSMP</div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="go('home',this)">🏠 Home</button>
+      <button class="nav-link" onclick="go('casino',this)">🎰 Casino</button>
+      <button class="nav-link" onclick="go('quiz',this)">❓ Quiz</button>
+      <button class="nav-link" onclick="go('withdraw',this)">💸 Auszahlung</button>
+      <button class="nav-link" onclick="go('rules',this)">📜 Regeln</button>
+      <button class="nav-link" onclick="go('info',this)">📖 Info</button>
+      <button class="nav-link d-none" id="navOwner" onclick="go('owner',this)">👑 Owner</button>
+    </div>
+    <div class="nav-right">
+      <div class="bal-chip" id="navBal">$0</div>
+      <div class="user-chip">
+        <div class="user-avatar" id="navAvatar">👤</div>
+        <div class="user-name" id="navUser">–</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- ══ HOME ══ -->
+  <div class="page active" id="page-home">
+    <div class="page-header">
+      <div class="page-icon">🏠</div>
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-desc">Dein Überblick auf dem DREVSMP</div>
+      </div>
+    </div>
+
+    <div class="welcome-banner" id="welcomeBanner">
+      <h2>WILLKOMMEN ZURÜCK!</h2>
+      <p>Verdiene Dollar durch <strong>Casino</strong> (nur mit Clan-Zugang) und <strong>Quiz-Fragen</strong> über Minecraft &amp; Opsucht. Ab <strong>$50.000</strong> kannst du dein Guthaben auszahlen lassen.</p>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-val" id="dBal">$0</div><div class="stat-lbl">💰 Guthaben</div></div>
+      <div class="stat-card green"><div class="stat-val" id="dQuizR">0</div><div class="stat-lbl">✅ Richtig</div></div>
+      <div class="stat-card"><div class="stat-val" id="dQuizW">0</div><div class="stat-lbl">❌ Falsch</div></div>
+      <div class="stat-card blue"><div class="stat-val" id="dSpins">0</div><div class="stat-lbl">🎰 Spins</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">⚡ Schnellzugriff</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary" style="font-size:14px;padding:11px" onclick="go('quiz',document.querySelectorAll('.nav-link')[2])">❓ Quiz spielen – bis zu $2.000!</button>
+          <button class="btn btn-gold" style="font-size:14px;padding:11px;color:#000" onclick="go('casino',document.querySelectorAll('.nav-link')[1])">🎰 Casino öffnen</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Statistiken</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text3)">Gewonnen (gesamt)</span><span style="color:var(--green);font-weight:700" id="dTotalWon">$0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text3)">Verloren (gesamt)</span><span style="color:var(--red);font-weight:700" id="dTotalLost">$0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text3)">Clan-Status</span><span id="dClanStatus" style="font-weight:700">–</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CASINO ══ -->
+  <div class="page" id="page-casino">
+    <div class="page-header">
+      <div class="page-icon">🎰</div>
+      <div>
+        <div class="page-title">Casino</div>
+        <div class="page-desc" id="casinoDesc">Nur für Clan-Mitglieder zugänglich</div>
+      </div>
+    </div>
+
+    <div id="casinoGate" class="casino-gate">
+      <div class="gate-icon">🔒</div>
+      <h3>Kein Clan-Zugang</h3>
+      <p>Du musst im Clan <span class="clan-name" id="gateClanName">"DrevClan"</span> sein, um das Casino zu nutzen.<br>Bitte den Owner, dich aufzunehmen. 🎮</p>
+    </div>
+
+    <div id="casinoContent" class="d-none">
+      <div class="slots-wrap">
+        <div class="slots-machine">
+          <div class="slots-header">🎰 SLOTS 🎰</div>
+          <div class="slots-sub">Setze deinen Einsatz und drehe!</div>
+
+          <div class="reels-row">
+            <div class="reel" id="r1">🍒</div>
+            <div class="reel" id="r2">🍒</div>
+            <div class="reel" id="r3">🍒</div>
+          </div>
+
+          <div class="bet-controls">
+            <div class="bet-presets">
+              <button class="btn btn-ghost btn-sm" onclick="setBet(10)">$10</button>
+              <button class="btn btn-ghost btn-sm" onclick="setBet(50)">$50</button>
+              <button class="btn btn-ghost btn-sm" onclick="setBet(100)">$100</button>
+              <button class="btn btn-ghost btn-sm" onclick="setBet(500)">$500</button>
+              <button class="btn btn-ghost btn-sm" onclick="setBet(1000)">$1K</button>
+              <button class="btn btn-ghost btn-sm" onclick="setBet(5000)">$5K</button>
+              <button class="btn btn-gold btn-sm" style="color:#000" onclick="setBetMax()">MAX</button>
+            </div>
+            <div class="bet-current">Einsatz: <span id="curBetDisplay">$10</span></div>
+          </div>
+
+          <button class="spin-btn" id="spinBtn" onclick="doSpin()">🎰 DREHEN</button>
+          <div class="slot-result" id="slotRes"></div>
+
+          <div class="paytable">
+            <div class="pt-title">Auszahlungstabelle</div>
+            <div class="pt-row pt-jackpot"><span>🎰🎰🎰 JACKPOT</span><span class="pt-mult">×50</span></div>
+            <div class="pt-row"><span>💎💎💎 Diamant</span><span class="pt-mult">×25</span></div>
+            <div class="pt-row"><span>⭐⭐⭐ Stern</span><span class="pt-mult">×15</span></div>
+            <div class="pt-row"><span>🍀🍀🍀 Kleeblatt</span><span class="pt-mult">×10</span></div>
+            <div class="pt-row"><span>🍋🍋🍋 Zitrone</span><span class="pt-mult">×8</span></div>
+            <div class="pt-row"><span>🍊🍊🍊 Orange</span><span class="pt-mult">×6</span></div>
+            <div class="pt-row"><span>🍒🍒🍒 Kirsche</span><span class="pt-mult">×4</span></div>
+            <div class="pt-row"><span>Zwei gleiche</span><span class="pt-mult">×1.5</span></div>
+            <div class="pt-row"><span>Kein Match</span><span class="pt-mult" style="color:var(--red)">–</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ QUIZ ══ -->
+  <div class="page" id="page-quiz">
+    <div class="page-header">
+      <div class="page-icon">❓</div>
+      <div>
+        <div class="page-title">Quiz</div>
+        <div class="page-desc">Minecraft &amp; Opsucht – Leicht $100 · Mittel $500 · Schwer $2.000</div>
+      </div>
+    </div>
+
+    <div class="quiz-outer">
+      <div class="quiz-top">
+        <span class="diff-pill diff-easy" id="qBadge">Leicht</span>
+        <span class="cat-tag" id="qCat">Kategorie</span>
+        <span class="reward-badge" id="qReward">+$100</span>
+      </div>
+
+      <div class="q-card" id="qCard">
+        <div class="q-text" id="qText">Lade Frage...</div>
+        <div class="answers" id="qAnswers"></div>
+        <div class="q-result" id="qRes"></div>
+        <div class="q-stats">
+          <div class="q-stat-item">Richtig: <span id="qStatR">0</span></div>
+          <div class="q-stat-item">Falsch: <span id="qStatW">0</span></div>
+        </div>
+        <div class="cooldown-box d-none" id="qCooldown">
+          ⏳ Nächste Frage in <span class="cd-timer" id="cdTimer">8</span>s...
+        </div>
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn btn-gold d-none" id="nextBtn" style="color:#000" onclick="loadQ()">→ Nächste Frage</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ WITHDRAW ══ -->
+  <div class="page" id="page-withdraw">
+    <div class="page-header">
+      <div class="page-icon">💸</div>
+      <div>
+        <div class="page-title">Auszahlung</div>
+        <div class="page-desc">Mindestens $50.000 – Bearbeitung 1 bis 72 Stunden</div>
+      </div>
+    </div>
+
+    <div class="wd-card card">
+      <div class="wd-info">
+        <div><strong>Mindestbetrag:</strong> <span class="val">$50.000</span></div>
+        <div><strong>Bearbeitungszeit:</strong> <span class="val">1 – 72 Stunden</span></div>
+        <div><strong>Dein Guthaben:</strong> <span class="val-green" id="wBal">$0</span></div>
+      </div>
+
+      <div id="wForm">
+        <div class="field">
+          <label class="field-label">Betrag eingeben (min. $50.000)</label>
+          <input type="number" id="wAmount" placeholder="50000" min="50000">
+        </div>
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,#22c55e,#16a34a)" onclick="doWithdraw()">💸 &nbsp;Auszahlung beantragen</button>
+      </div>
+
+      <div id="wPending" class="d-none">
+        <div class="pending-box">
+          <h3>⏳ AUSZAHLUNG AUSSTEHEND</h3>
+          <p>Du hast <strong id="wPendAmt" style="color:var(--gold)"></strong> beantragt.<br>
+          Bitte warte <strong style="color:var(--gold)">1 bis 72 Stunden</strong>.<br>
+          Ein Owner wird deine Zahlung bestätigen. 🕐</p>
+          <button class="btn btn-danger btn-sm" style="margin-top:16px" onclick="cancelWithdraw()">Antrag abbrechen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RULES ══ -->
+  <div class="page" id="page-rules">
+    <div class="page-header">
+      <div class="page-icon">📜</div>
+      <div>
+        <div class="page-title">Regelwerk</div>
+        <div class="page-desc">DREVSMP Regeln – Bitte lies alles durch!</div>
+      </div>
+    </div>
+
+    <div class="rules-grid">
+      <div class="rule-card green">
+        <div class="rule-title">✅ Allgemeine Regeln</div>
+        <ul class="rule-list">
+          <li>Jeden Spieler respektieren</li>
+          <li>Kein Beleidigen, Mobbing oder Rassismus</li>
+          <li>Keine Spam-Nachrichten im Chat</li>
+          <li>Fairplay zu jedem Zeitpunkt</li>
+          <li>Auf Anweisungen der Owner hören</li>
+        </ul>
+      </div>
+
+      <div class="rule-card red">
+        <div class="rule-title">❌ Verbote</div>
+        <ul class="rule-list">
+          <li>Keine Cheats, Hacks oder Exploits</li>
+          <li>Kein Griefing (Bauten zerstören)</li>
+          <li>Kein Item-Duplikations-Glitch</li>
+          <li>Keine Auto-Antwort-Bots im Quiz</li>
+          <li>Kein Stalken oder Verfolgen anderer</li>
+        </ul>
+      </div>
+
+      <div class="rule-card gold">
+        <div class="rule-title">💰 Casino & Geld</div>
+        <ul class="rule-list">
+          <li>Casino-Zugang nur über Owner-Clan</li>
+          <li>Auszahlungen erst ab <strong>$50.000</strong></li>
+          <li>Bearbeitungszeit: 1 bis 72 Stunden</li>
+          <li>Kein Betteln nach Geld beim Owner</li>
+          <li>Gewinne werden nicht "manuell" vergeben</li>
+        </ul>
+      </div>
+
+      <div class="rule-card purple">
+        <div class="rule-title">👑 Owner-Entscheidungen</div>
+        <ul class="rule-list">
+          <li>Owner-Entscheidungen sind endgültig</li>
+          <li>Bans ohne Angabe von Gründen möglich</li>
+          <li>Clan-Aufnahme liegt beim Owner</li>
+          <li>Keine Diskussion über Bans im Chat</li>
+          <li>Unfaires Verhalten → sofortiger Ban</li>
+        </ul>
+      </div>
+
+      <div class="rule-card blue">
+        <div class="rule-title">❓ Quiz-Regeln</div>
+        <ul class="rule-list">
+          <li>Fragen müssen selbst beantwortet werden</li>
+          <li>Keine Bots, Skripte oder Automations</li>
+          <li>Cooldown zwischen Fragen: 8 Sekunden</li>
+          <li>Falsche Antwort gibt kein Geld</li>
+          <li>Fragen decken Minecraft &amp; Opsucht ab</li>
+        </ul>
+      </div>
+
+      <div class="rule-card red">
+        <div class="rule-title">🚫 Konsequenzen</div>
+        <ul class="rule-list">
+          <li>1. Verstoß: Verwarnung</li>
+          <li>2. Verstoß: Temporärer Ban</li>
+          <li>3. Verstoß: Permanenter Ban</li>
+          <li>Schwere Verstöße: Sofort-IP-Ban</li>
+          <li>Gebannte Konten werden nicht gelöscht</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ INFO ══ -->
+  <div class="page" id="page-info">
+    <div class="page-header">
+      <div class="page-icon">📖</div>
+      <div>
+        <div class="page-title">Informationen</div>
+        <div class="page-desc">Über Opsucht und Minecraft</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>🌐 Opsucht – Der Server</h3>
+      <ul>
+        <li>Opsucht ist eine deutschsprachige Minecraft-Community</li>
+        <li>Website: <a href="https://opsucht.net" target="_blank" class="info-link">opsucht.net</a></li>
+        <li>Bekannt für aktive Community, Events und Fair-Play</li>
+        <li>Verschiedene Spielmodi: Survival, PvP, Fraktionen</li>
+        <li>Einer der bekanntesten deutschen Minecraft-Server</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>⛏ Minecraft – Allgemein</h3>
+      <ul>
+        <li>Entwickelt von Markus „Notch" Persson, veröffentlicht 2011</li>
+        <li>Entwickler: Mojang Studios (seit 2014 Teil von Microsoft)</li>
+        <li>Meistverkauftes Videospiel aller Zeiten (~240+ Mio. Kopien)</li>
+        <li>Java Edition für PC · Bedrock Edition für Konsolen & Mobile</li>
+        <li>Ständige Updates: zuletzt 1.21 „Tricky Trials" (2024)</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>🎮 DREVSMP</h3>
+      <ul>
+        <li>Community-Projekt rund um Opsucht und Minecraft</li>
+        <li>Verdiene Geld durch Quiz (Minecraft &amp; Opsucht Wissen)</li>
+        <li>Casino-Zugang nur für Clan-Mitglieder</li>
+        <li>Auszahlungen ab $50.000 möglich</li>
+        <li>Owner: <strong style="color:var(--gold)">Rami</strong> – Bei Fragen einfach fragen!</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ OWNER ══ -->
+  <div class="page" id="page-owner">
+    <div class="page-header">
+      <div class="page-icon">👑</div>
+      <div>
+        <div class="page-title">Owner Panel</div>
+        <div class="page-desc">Spielerverwaltung und Server-Steuerung</div>
+      </div>
+    </div>
+
+    <div id="ownerContent">
+
+      <!-- Geld -->
+      <div class="owner-section">
+        <div class="owner-sect-title">💰 GELD GEBEN / NEHMEN</div>
+        <div class="form-row">
+          <div class="field"><label class="field-label">Username</label><input type="text" id="mUser" placeholder="Spielername"></div>
+          <div class="field"><label class="field-label">Betrag ($)</label><input type="number" id="mAmt" placeholder="1000"></div>
+          <button class="btn btn-primary btn-sm" style="margin-bottom:0" onclick="ownerMoney('give')">+ Geben</button>
+          <button class="btn btn-danger btn-sm" style="margin-bottom:0" onclick="ownerMoney('take')">– Nehmen</button>
+        </div>
+      </div>
+
+      <!-- Clan -->
+      <div class="owner-section">
+        <div class="owner-sect-title">👥 CLAN-VERWALTUNG (= Casino-Zugang)</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="field"><label class="field-label">Clan-Name</label><input type="text" id="clanNameInput" placeholder="DrevClan"></div>
+          <button class="btn btn-ghost btn-sm" style="margin-bottom:0" onclick="saveClanName()">💾 Speichern</button>
+        </div>
+        <div class="form-row">
+          <div class="field"><label class="field-label">Spieler hinzufügen/entfernen</label><input type="text" id="cUser" placeholder="Spielername"></div>
+          <button class="btn btn-purple btn-sm" style="margin-bottom:0" onclick="ownerClan(true)">+ Aufnehmen</button>
+          <button class="btn btn-danger btn-sm" style="margin-bottom:0" onclick="ownerClan(false)">– Rauswerfen</button>
+        </div>
+      </div>
+
+      <!-- Owner-Rechte -->
+      <div class="owner-section">
+        <div class="owner-sect-title">👑 OWNER-RECHTE</div>
+        <div class="form-row">
+          <div class="field"><label class="field-label">Username</label><input type="text" id="oUser" placeholder="Spielername"></div>
+          <button class="btn btn-gold btn-sm" style="margin-bottom:0;color:#000" onclick="ownerRights(true)">👑 Owner geben</button>
+          <button class="btn btn-danger btn-sm" style="margin-bottom:0" onclick="ownerRights(false)">Entziehen</button>
+        </div>
+      </div>
+
+      <!-- Spielerliste -->
+      <div class="owner-section">
+        <div class="owner-sect-title">📋 ALLE SPIELER</div>
+        <div style="overflow-x:auto">
+          <table class="player-tbl">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Guthaben</th>
+                <th>Rechte / Clan</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody id="playerBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="ownerDenied" class="owner-denied d-none">
+      <h2>🚫 Kein Zugang</h2>
+      <p>Du bist kein Owner und hast keinen Zugang zu diesem Bereich.</p>
+    </div>
+  </div>
+
+</div><!-- /appScreen -->
+
+<div id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
+
+<script src="drevsmp-data.js"></script>
+<script>
+'use strict';
+
+// ═══════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════
+
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) =>
+    t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('fLogin').classList.toggle('active', tab==='login');
+  document.getElementById('fRegister').classList.toggle('active', tab==='register');
+}
+
+function authMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'auth-msg ' + type;
+}
+
+function doRegister() {
+  const user = document.getElementById('rUser').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  const pass2 = document.getElementById('rPass2').value;
+
+  if (user.length < 2)               return authMsg('rMsg','⚠ Username mind. 2 Zeichen!','err');
+  if (user.length > 32)              return authMsg('rMsg','⚠ Username max. 32 Zeichen!','err');
+  if (!/^[a-zA-Z0-9_]+$/.test(user)) return authMsg('rMsg','⚠ Nur Buchstaben, Zahlen und _ erlaubt!','err');
+  if (pass.length < 6)               return authMsg('rMsg','⚠ Passwort mind. 6 Zeichen!','err');
+  if (pass !== pass2)                return authMsg('rMsg','⚠ Passwörter stimmen nicht überein!','err');
+  if (getUser(user))                 return authMsg('rMsg','⚠ Dieser Username ist schon vergeben!','err');
+
+  const u = makeUser(user, hashPwd(pass));
+  saveUser(u);
+  authMsg('rMsg','✅ Account erstellt! Jetzt einloggen.','ok');
+  ['rUser','rPass','rPass2'].forEach(id => document.getElementById(id).value='');
+  setTimeout(()=>switchTab('login'), 1200);
+}
+
+function doLogin() {
+  const user = document.getElementById('lUser').value.trim();
+  const pass = document.getElementById('lPass').value;
+
+  if (!user||!pass) return authMsg('lMsg','⚠ Bitte alle Felder ausfüllen!','err');
+  const u = getUser(user);
+  if (!u)                            return authMsg('lMsg','⚠ Account nicht gefunden!','err');
+  if (u.pwdHash !== hashPwd(pass))   return authMsg('lMsg','⚠ Falsches Passwort!','err');
+  if (u.isBanned || u.ipBanned)      return authMsg('lMsg','⛔ Du bist von diesem Server gebannt!','err');
+
+  sessionUser = user;
+  localStorage.setItem('drev_session', user);
+  document.getElementById('lPass').value = '';
+  openApp();
+}
+
+function doLogout() {
+  sessionUser = null;
+  localStorage.removeItem('drev_session');
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+}
+
+// ═══════════════════════════════════
+//  SESSION
+// ═══════════════════════════════════
+
+let sessionUser = null;
+
+function me() { return sessionUser ? getUser(sessionUser) : null; }
+
+window.addEventListener('load', () => {
+  initOwner();
+  const s = localStorage.getItem('drev_session');
+  if (s) {
+    const u = getUser(s);
+    if (u && !u.isBanned && !u.ipBanned) {
+      sessionUser = s;
+      openApp();
+      return;
+    }
+    localStorage.removeItem('drev_session');
+  }
+  document.getElementById('authScreen').classList.add('active');
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const inAuth = document.getElementById('authScreen').classList.contains('active');
+  if (!inAuth) return;
+  const loginActive = document.getElementById('fLogin').classList.contains('active');
+  if (loginActive) doLogin(); else doRegister();
+});
+
+function openApp() {
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  refreshNav();
+  go('home', document.querySelector('.nav-link'));
+}
+
+// ═══════════════════════════════════
+//  NAV + PAGES
+// ═══════════════════════════════════
+
+function refreshNav() {
+  const u = me();
+  if (!u) return;
+
+  document.getElementById('navUser').textContent = u.username;
+  document.getElementById('navAvatar').textContent = u.isOwner ? '👑' : (isInClan(u.username) ? '🎰' : '👤');
+  document.getElementById('navBal').textContent = fmt(u.balance);
+  document.getElementById('navOwner').classList.toggle('d-none', !u.isOwner);
+
+  // home stats
+  document.getElementById('dBal').textContent        = fmt(u.balance);
+  document.getElementById('dQuizR').textContent       = u.quizRight || 0;
+  document.getElementById('dQuizW').textContent       = u.quizWrong || 0;
+  document.getElementById('dSpins').textContent       = u.spinCount || 0;
+  document.getElementById('dTotalWon').textContent    = fmt(u.totalWon || 0);
+  document.getElementById('dTotalLost').textContent   = fmt(u.totalLost || 0);
+
+  const clan = getClan();
+  const inC  = isInClan(u.username);
+  document.getElementById('dClanStatus').textContent = inC
+    ? `✅ In "${clan.name}"`
+    : '❌ Kein Clan';
+  document.getElementById('dClanStatus').style.color = inC ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('wBal').textContent = fmt(u.balance);
+
+  // quiz stats
+  document.getElementById('qStatR').textContent = u.quizRight || 0;
+  document.getElementById('qStatW').textContent = u.quizWrong || 0;
+}
+
+function go(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const pg = document.getElementById('page-'+name);
+  if (pg) pg.classList.add('active');
+  if (btn) btn.classList.add('active');
+  refreshNav();
+  if (name==='casino')   renderCasino();
+  if (name==='quiz')     loadQ();
+  if (name==='owner')    renderOwner();
+  if (name==='withdraw') renderWithdraw();
+}
+
+function fmt(n) { return '$'+Math.floor(n).toLocaleString('de-DE'); }
+
+// ═══════════════════════════════════
+//  CASINO
+// ═══════════════════════════════════
+
+const SYMS  = ['🍒','🍊','🍋','🍀','⭐','💎','🎰'];
+// Weights per symbol (higher = more likely) → beginner-friendly
+// 🍒 most common, 🎰 least common
+const WEIGHTS= [28, 22, 16, 12, 9, 7, 3]; // total = 97 → not 100, that's fine
+const MULT  = {'🍒🍒🍒':4,'🍊🍊🍊':6,'🍋🍋🍋':8,'🍀🍀🍀':10,'⭐⭐⭐':15,'💎💎💎':25,'🎰🎰🎰':50};
+
+let curBet = 10, spinning = false;
+
+function randSym() {
+  const total = WEIGHTS.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total, s=0;
+  for (let i=0;i<SYMS.length;i++) { s+=WEIGHTS[i]; if(r<=s) return SYMS[i]; }
+  return SYMS[0];
+}
+
+function renderCasino() {
+  const u = me();
+  const access = u && (u.isOwner || isInClan(u.username));
+  document.getElementById('casinoGate').classList.toggle('d-none', access);
+  document.getElementById('casinoContent').classList.toggle('d-none', !access);
+  const clan = getClan();
+  document.getElementById('gateClanName').textContent = '"'+clan.name+'"';
+  document.getElementById('casinoDesc').textContent = access ? `Willkommen im Casino, ${u.username}! 🎲` : 'Nur für Clan-Mitglieder zugänglich';
+}
+
+function setBet(a) {
+  const u = me(); if (!u) return;
+  curBet = Math.min(a, u.balance);
+  document.getElementById('curBetDisplay').textContent = fmt(curBet);
+}
+function setBetMax() {
+  const u = me(); if (!u) return;
+  curBet = u.balance;
+  document.getElementById('curBetDisplay').textContent = fmt(curBet);
+}
+
+function doSpin() {
+  if (spinning) return;
+  const u = getUser(sessionUser);
+  if (!u) return;
+  if (curBet <= 0 || u.balance < curBet) { toast('Nicht genug Guthaben!','e'); return; }
+
+  spinning = true;
+  u.balance -= curBet;
+  u.spinCount = (u.spinCount||0)+1;
+  u.totalLost = (u.totalLost||0)+curBet;
+  saveUser(u);
+  refreshNav();
+
+  ['r1','r2','r3'].forEach(id=>{ document.getElementById(id).classList.remove('win','lose','jackpot'); document.getElementById(id).classList.add('spin'); });
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('slotRes').textContent = '';
+  document.getElementById('slotRes').className = 'slot-result';
+
+  let t = 0;
+  const iv = setInterval(()=>{
+    t++;
+    ['r1','r2','r3'].forEach(id=>{ document.getElementById(id).textContent = randSym(); });
+    if (t >= 22) {
+      clearInterval(iv);
+      const res = [randSym(), randSym(), randSym()];
+      ['r1','r2','r3'].forEach((id,i)=>{ const el=document.getElementById(id); el.textContent=res[i]; el.classList.remove('spin'); });
+      evalSpin(res);
+    }
+  }, 72);
+}
+
+function evalSpin(res) {
+  const u = getUser(sessionUser);
+  const key = res.join('');
+  let win=0, msg='', cls='';
+  const isJP = key==='🎰🎰🎰';
+
+  if (MULT[key]) {
+    win = Math.floor(curBet * MULT[key]);
+    msg = isJP ? `🎉 JACKPOT! Du gewinnst ${fmt(win)}!` : `✅ ${key} – Gewonnen! +${fmt(win)}`;
+    cls = isJP ? 'jp' : 'win';
+    ['r1','r2','r3'].forEach(id=>document.getElementById(id).classList.add(isJP?'jackpot':'win'));
+  } else {
+    const s = new Set(res);
+    if (s.size <= 2) {
+      win = Math.floor(curBet*1.5);
+      msg = `🟡 Zwei Gleiche! +${fmt(win)}`;
+      cls = 'win';
+      document.querySelectorAll('.reel').forEach((el,i)=>{
+        if (res.indexOf(res[i]) !== i || res.lastIndexOf(res[i]) !== i) el.classList.add('win');
+      });
+    } else {
+      msg = `❌ Verloren! –${fmt(curBet)}`;
+      cls = 'lose';
+      ['r1','r2','r3'].forEach(id=>document.getElementById(id).classList.add('lose'));
+    }
+  }
+
+  if (win > 0) {
+    u.balance += win;
+    u.totalWon = (u.totalWon||0)+win;
+  }
+  saveUser(u);
+
+  const el = document.getElementById('slotRes');
+  el.textContent = msg; el.className = 'slot-result '+cls;
+  document.getElementById('spinBtn').disabled = false;
+  spinning = false;
+  refreshNav();
+  setTimeout(()=>['r1','r2','r3'].forEach(id=>document.getElementById(id).classList.remove('win','lose','jackpot')), 1800);
+}
+
+// ═══════════════════════════════════
+//  QUIZ
+// ═══════════════════════════════════
+
+let curQ=null, answered=false, cdIv=null;
+
+function loadQ() {
+  const u = me();
+  if (!u) return;
+
+  const now = Date.now();
+  if (answered && (now-(u.lastQuiz||0)) < CFG.QUIZ_COOLDOWN) {
+    const left = Math.ceil((CFG.QUIZ_COOLDOWN-(now-u.lastQuiz))/1000);
+    document.getElementById('qCooldown').classList.remove('d-none');
+    document.getElementById('cdTimer').textContent = left;
+    document.getElementById('nextBtn').classList.add('d-none');
+    if (!cdIv) cdIv = setInterval(()=>{
+      const u2 = me();
+      const rem = Math.ceil((CFG.QUIZ_COOLDOWN-(Date.now()-(u2.lastQuiz||0)))/1000);
+      if (rem <= 0) { clearInterval(cdIv); cdIv=null; loadQ(); }
+      else document.getElementById('cdTimer').textContent = rem;
+    }, 500);
+    return;
+  }
+  clearInterval(cdIv); cdIv=null;
+  document.getElementById('qCooldown').classList.add('d-none');
+  document.getElementById('nextBtn').classList.add('d-none');
+  document.getElementById('qRes').textContent='';
+  document.getElementById('qRes').className='q-result';
+  answered=false;
+
+  curQ = QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+  const dm={easy:'diff-easy',medium:'diff-medium',hard:'diff-hard'};
+  const dl={easy:'Leicht',medium:'Mittel',hard:'Schwer'};
+  const badge=document.getElementById('qBadge');
+  badge.className='diff-pill '+dm[curQ.d];
+  badge.textContent=dl[curQ.d];
+  document.getElementById('qCat').textContent=curQ.cat||'';
+  document.getElementById('qReward').textContent='+'+fmt(curQ.r);
+  document.getElementById('qText').textContent=curQ.q;
+
+  const el=document.getElementById('qAnswers');
+  el.innerHTML='';
+  // shuffle answers (track correct)
+  const idxArr=[0,1,2,3];
+  for(let i=idxArr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idxArr[i],idxArr[j]]=[idxArr[j],idxArr[i]]; }
+  let shuffledCorrect=0;
+  idxArr.forEach((origIdx,newIdx)=>{ if(origIdx===curQ.c) shuffledCorrect=newIdx; });
+
+  idxArr.forEach((origIdx,newIdx)=>{
+    const b=document.createElement('button');
+    b.className='ans-btn';
+    b.textContent=curQ.a[origIdx];
+    b.dataset.idx=newIdx;
+    b.onclick=()=>answerQ(newIdx, shuffledCorrect, b, el);
+    el.appendChild(b);
+  });
+}
+
+function answerQ(picked, correct, btn, container) {
+  if (answered) return;
+  answered=true;
+  const u=getUser(sessionUser);
+  const btns=container.querySelectorAll('.ans-btn');
+  btns.forEach(b=>b.disabled=true);
+  btns[correct].classList.add('correct');
+  const res=document.getElementById('qRes');
+  u.lastQuiz=Date.now();
+  if (picked===correct) {
+    u.balance += curQ.r;
+    u.totalWon=(u.totalWon||0)+curQ.r;
+    u.quizRight=(u.quizRight||0)+1;
+    u.quizCount=(u.quizCount||0)+1;
+    saveUser(u); refreshNav();
+    res.textContent=`✅ Richtig! +${fmt(curQ.r)} gutgeschrieben!`;
+    res.className='q-result win';
+    toast(`+${fmt(curQ.r)} verdient! ✅`, 's');
+  } else {
+    btn.classList.add('wrong');
+    u.quizWrong=(u.quizWrong||0)+1;
+    u.quizCount=(u.quizCount||0)+1;
+    saveUser(u); refreshNav();
+    res.textContent=`❌ Falsch! Richtig wäre: ${curQ.a[curQ.c]}`;
+    res.className='q-result lose';
+  }
+  document.getElementById('nextBtn').classList.remove('d-none');
+  document.getElementById('qStatR').textContent = u.quizRight||0;
+  document.getElementById('qStatW').textContent = u.quizWrong||0;
+}
+
+// ═══════════════════════════════════
+//  WITHDRAW
+// ═══════════════════════════════════
+
+function renderWithdraw() {
+  const u=me(); if(!u) return;
+  document.getElementById('wBal').textContent=fmt(u.balance);
+  const hasPend=!!u.pendingWithdraw;
+  document.getElementById('wForm').classList.toggle('d-none', hasPend);
+  document.getElementById('wPending').classList.toggle('d-none', !hasPend);
+  if (hasPend) document.getElementById('wPendAmt').textContent=fmt(u.pendingWithdraw);
+}
+
+function doWithdraw() {
+  const u=getUser(sessionUser);
+  const amt=parseFloat(document.getElementById('wAmount').value);
+  if (!amt||amt<CFG.MIN_WITHDRAW) { toast(`Mindestbetrag: ${fmt(CFG.MIN_WITHDRAW)}!`,'e'); return; }
+  if (amt>u.balance) { toast('Nicht genug Guthaben!','e'); return; }
+  u.pendingWithdraw=amt;
+  u.balance-=amt;
+  saveUser(u); refreshNav(); renderWithdraw();
+  toast('Auszahlung beantragt! Warte 1–72h.','i');
+}
+
+function cancelWithdraw() {
+  const u=getUser(sessionUser);
+  u.balance+=(u.pendingWithdraw||0);
+  u.pendingWithdraw=null;
+  saveUser(u); refreshNav(); renderWithdraw();
+  toast('Auszahlung abgebrochen.','i');
+}
+
+// ═══════════════════════════════════
+//  OWNER PANEL
+// ═══════════════════════════════════
+
+function renderOwner() {
+  const u=me();
+  const isO=u&&u.isOwner;
+  document.getElementById('ownerContent').classList.toggle('d-none',!isO);
+  document.getElementById('ownerDenied').classList.toggle('d-none',!!isO);
+  if (isO) {
+    document.getElementById('clanNameInput').value=getClan().name;
+    renderTable();
+  }
+}
+
+function renderTable() {
+  const d=getDB();
+  const body=document.getElementById('playerBody');
+  body.innerHTML='';
+  const clan=getClan();
+  const players=Object.values(d.users||{});
+  if (!players.length) {
+    body.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">Keine Spieler registriert</td></tr>';
+    return;
+  }
+  players.forEach(pl=>{
+    const inClan=clan.members.includes(pl.username.toLowerCase())||pl.isOwner;
+    const tr=document.createElement('tr');
+    const badges=[];
+    if(pl.isOwner) badges.push('<span class="badge badge-owner">👑 Owner</span>');
+    if(inClan&&!pl.isOwner) badges.push(`<span class="badge badge-clan">🎰 ${clan.name}</span>`);
+
+    const statusBadges=[];
+    if(pl.isBanned)   statusBadges.push('<span class="badge badge-banned">⛔ Ban</span>');
+    if(pl.ipBanned)   statusBadges.push('<span class="badge badge-banned">🚫 IP-Ban</span>');
+    if(!pl.isBanned&&!pl.ipBanned) statusBadges.push('<span style="color:var(--green);font-size:12px;font-weight:600">✓ OK</span>');
+
+    tr.innerHTML=`
+      <td><strong style="font-size:14px">${pl.username}</strong></td>
+      <td style="color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums">${fmt(pl.balance)}</td>
+      <td>${badges.join('')||'–'}</td>
+      <td>${statusBadges.join('')}${pl.pendingWithdraw?`<br><span style="color:var(--cyan);font-size:11px;font-weight:600">💸 ${fmt(pl.pendingWithdraw)}</span>`:''}</td>
+      <td>
+        <div class="tbl-acts">
+          ${!pl.isBanned
+            ?`<button class="btn btn-danger btn-xs" onclick="oban('${pl.username}',true,false)">Ban</button>`
+            :`<button class="btn btn-primary btn-xs" onclick="ounban('${pl.username}')">Unban</button>`}
+          ${!pl.ipBanned
+            ?`<button class="btn btn-danger btn-xs" onclick="oban('${pl.username}',false,true)">IP-Ban</button>`
+            :`<button class="btn btn-ghost btn-xs" onclick="oipunban('${pl.username}')">IP-Unban</button>`}
+          ${pl.pendingWithdraw?`<button class="btn btn-primary btn-xs" onclick="oapprove('${pl.username}')">✓ Zahlung</button>`:''}
+        </div>
+      </td>`;
+    body.appendChild(tr);
+  });
+}
+
+function saveClanName() {
+  const name=document.getElementById('clanNameInput').value.trim();
+  if(!name) { toast('Clan-Name eingeben!','e'); return; }
+  const c=getClan(); c.name=name; saveClan(c);
+  refreshNav(); renderTable();
+  toast(`Clan umbenannt zu "${name}"!`,'s');
+}
+
+function ownerMoney(action) {
+  const uname=document.getElementById('mUser').value.trim();
+  const amt=parseFloat(document.getElementById('mAmt').value);
+  if(!uname||!amt||amt<=0) { toast('Username und Betrag angeben!','e'); return; }
+  const t=getUser(uname);
+  if(!t) { toast('Spieler nicht gefunden!','e'); return; }
+  if(action==='give') { t.balance+=amt; toast(`+${fmt(amt)} an ${uname} gegeben!`,'s'); }
+  else {
+    if(t.balance<amt) { toast('Spieler hat nicht genug Guthaben!','e'); return; }
+    t.balance-=amt; toast(`–${fmt(amt)} von ${uname} genommen!`,'s');
+  }
+  saveUser(t); renderTable(); refreshNav();
+}
+
+function ownerClan(add) {
+  const uname=document.getElementById('cUser').value.trim();
+  if(!uname) { toast('Username eingeben!','e'); return; }
+  const t=getUser(uname);
+  if(!t) { toast('Spieler nicht gefunden!','e'); return; }
+  const c=getClan();
+  const low=uname.toLowerCase();
+  if(add) {
+    if(!c.members.includes(low)) c.members.push(low);
+    toast(`${uname} zum Clan "${c.name}" hinzugefügt! 🎰`,'s');
+  } else {
+    c.members=c.members.filter(m=>m!==low);
+    toast(`${uname} aus dem Clan entfernt.`,'i');
+  }
+  saveClan(c); renderTable(); refreshNav();
+}
+
+function ownerRights(grant) {
+  const uname=document.getElementById('oUser').value.trim();
+  if(!uname) { toast('Username eingeben!','e'); return; }
+  if(!grant&&uname.toLowerCase()===CFG.OWNER_NAME) { toast('Haupt-Owner kann nicht entfernt werden!','e'); return; }
+  const t=getUser(uname);
+  if(!t) { toast('Spieler nicht gefunden!','e'); return; }
+  t.isOwner=grant; saveUser(t); renderTable();
+  toast(grant?`👑 Owner-Rechte an ${uname}!`:`Owner-Rechte von ${uname} entzogen.`,'s');
+}
+
+function oban(uname, ban, ip) {
+  if(uname.toLowerCase()===sessionUser.toLowerCase()) { toast('Kannst dich nicht selbst bannen!','e'); return; }
+  const t=getUser(uname); if(!t) return;
+  if(ip) t.ipBanned=ban; else t.isBanned=ban;
+  saveUser(t); renderTable();
+  toast(`${uname} ${ip?'IP-':''}gebannt!`,'s');
+}
+function ounban(uname)   { const t=getUser(uname); if(!t) return; t.isBanned=false; saveUser(t); renderTable(); toast(`${uname} entbannt!`,'s'); }
+function oipunban(uname) { const t=getUser(uname); if(!t) return; t.ipBanned=false; saveUser(t); renderTable(); toast(`IP-Ban von ${uname} aufgehoben!`,'s'); }
+function oapprove(uname) {
+  const t=getUser(uname); if(!t) return;
+  t.pendingWithdraw=null; saveUser(t); renderTable();
+  toast(`Auszahlung für ${uname} bestätigt! ✅`,'s');
+}
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+
+let toastTm;
+function toast(msg, type='i') {
+  const el=document.getElementById('toast');
+  clearTimeout(toastTm);
+  document.getElementById('toastMsg').textContent=msg;
+  el.className='t'+type;
+  el.classList.add('show');
+  toastTm=setTimeout(()=>el.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>
