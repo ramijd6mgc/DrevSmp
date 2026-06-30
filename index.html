@@ -1359,7 +1359,270 @@ input::placeholder { color:var(--text3); }
 
 <div id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
 
-<script src="drevsmp-data.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  DREVSMP – DATA FILE
+//  Enthält: Konfiguration, Quizfragen, Speichersystem
+// ═══════════════════════════════════════════════════
+
+const CFG = {
+  OWNER_NAME:       'rami',
+  OWNER_PASSWORD:   'DrevSMP2024!',
+  START_BALANCE:    1000,
+  MIN_WITHDRAW:     50000,
+  MIN_BET:          10,
+  QUIZ_COOLDOWN:    6000,
+  VERSION:          'v2.0',
+};
+
+// ─── HASH (FNV-1a) ───────────────────────────────
+function hashPwd(pwd) {
+  let h = 2166136261;
+  for (let i = 0; i < pwd.length; i++) {
+    h ^= pwd.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h.toString(16).padStart(8,'0');
+}
+
+// ─── SPEICHER ────────────────────────────────────
+function getDB() {
+  try {
+    const d = JSON.parse(localStorage.getItem('drev_db_v2') || '{}');
+    if (!d.users) d.users = {};
+    if (!d.clan)  d.clan  = { name: 'DrevClan', members: [] };
+    return d;
+  } catch { return { users: {}, clan: { name: 'DrevClan', members: [] } }; }
+}
+function saveDB(d) { localStorage.setItem('drev_db_v2', JSON.stringify(d)); }
+function getUser(name) { return getDB().users[name.toLowerCase()] || null; }
+function saveUser(u) {
+  const d = getDB();
+  d.users[u.username.toLowerCase()] = u;
+  saveDB(d);
+}
+function makeUser(username, pwdHash) {
+  return {
+    username,
+    pwdHash,
+    balance:       CFG.START_BALANCE,
+    isOwner:       username.toLowerCase() === CFG.OWNER_NAME,
+    isBanned:      false,
+    ipBanned:      false,
+    quizCount:     0,
+    spinCount:     0,
+    quizRight:     0,
+    quizWrong:     0,
+    totalWon:      0,
+    totalLost:     0,
+    pendingWithdraw: null,
+    lastQuiz:      0,
+    joinedAt:      Date.now(),
+  };
+}
+
+// ─── OWNER INIT ──────────────────────────────────
+function initOwner() {
+  if (!getUser(CFG.OWNER_NAME)) {
+    const u = makeUser(CFG.OWNER_NAME, hashPwd(CFG.OWNER_PASSWORD));
+    u.isOwner = true;
+    saveUser(u);
+  }
+}
+
+// ─── CLAN ────────────────────────────────────────
+function getClan() { return getDB().clan; }
+function saveClan(clan) { const d = getDB(); d.clan = clan; saveDB(d); }
+function isInClan(username) {
+  const c = getClan();
+  return username.toLowerCase() === CFG.OWNER_NAME ||
+    c.members.includes(username.toLowerCase());
+}
+
+// ════════════════════════════════════════════════
+//  QUIZ-FRAGEN (200+)
+//  Kategorien: basics, crafting, mobs, biomes,
+//              nether, end, enchanting, redstone,
+//              commands, opsucht, multiplayer
+// ════════════════════════════════════════════════
+
+const QUESTIONS = [
+
+  // ══════════════ LEICHT – $100 ══════════════
+
+  // BASICS
+  {q:"Aus welchem Material baut man eine Fackel?",a:["Kohle & Stock","Stein & Stock","Knochen & Stick","Eisen & Holz"],c:0,d:"easy",r:100,cat:"Basics"},
+  {q:"Was braucht man zum Überleben als Erstes in der Nacht?",a:["Schwert","Bett","Ofen","Schutzrüstung"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Wie viele Herzen hat ein Standard-Spieler?",a:["5","10","20","15"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Was macht ein Ofen?",a:["Schmilzt und grillt","Erstellt Zaubertränke","Repariert Items","Züchtet Tiere"],c:0,d:"easy",r:100,cat:"Basics"},
+  {q:"Welcher Baum wächst am schnellsten in Minecraft?",a:["Eiche","Birke","Akazie","Bambus"],c:3,d:"easy",r:100,cat:"Basics"},
+  {q:"Was ist die häufigste Ressource in Minecraft?",a:["Eisen","Stein","Kohle","Sand"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Welches Tier gibt Leder?",a:["Schwein","Kuh","Schaf","Huhn"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Wie tötet man einen Enderman am einfachsten?",a:["Mit Bogen","Ins Wasser locken","Mit Feuer","Mit Schwert"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Was droopt ein Zombie?",a:["Knochen","Faulendes Fleisch","Feder","Fisch"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Was droopt ein Skelett?",a:["Knochen & Pfeile","Faulendes Fleisch","Blaze-Stab","Ghast-Träne"],c:0,d:"easy",r:100,cat:"Mobs"},
+  {q:"Welches Tier legt Eier in Minecraft?",a:["Huhn","Ente","Kuh","Schaf"],c:0,d:"easy",r:100,cat:"Mobs"},
+  {q:"Was frisst ein Schwein?",a:["Weizen","Karotte","Apfel","Kürbis"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Welche Farbe hat ein Creeper?",a:["Blau","Rot","Grün","Gelb"],c:2,d:"easy",r:100,cat:"Mobs"},
+  {q:"Was passiert, wenn man einen Creeper mit Blitz trifft?",a:["Er stirbt sofort","Er wird geladen (Supercharged)","Er explodet sofort","Nichts"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Welcher Mob kann durch Wände schauen?",a:["Zombie","Creeper","Enderman","Spider"],c:2,d:"easy",r:100,cat:"Mobs"},
+  {q:"Was braucht man für ein Schwert?",a:["2 Stöcke + 1 Material","2 Material + 1 Stock","3 Material","1 Stock + 3 Material"],c:1,d:"easy",r:100,cat:"Crafting"},
+  {q:"Wie viele Bretter bekommt man aus einem Holzblock?",a:["2","4","6","8"],c:1,d:"easy",r:100,cat:"Crafting"},
+  {q:"Was ergibt 9 Eisenblöcke in einem Crafting-Table?",a:["81 Eisen-Ingots","9 Eisen-Ingots","1 Eisen-Block","Nichts"],c:1,d:"easy",r:100,cat:"Crafting"},
+  {q:"Wie heißt das Crafting-Interface von 3x3?",a:["Werkbank","Schmiede","Tisch","Brauerei"],c:0,d:"easy",r:100,cat:"Crafting"},
+  {q:"Was braucht man, um Glas herzustellen?",a:["Sand schmelzen","Stein schleifen","Quarz verarbeiten","Wasser filtern"],c:0,d:"easy",r:100,cat:"Crafting"},
+  {q:"Welches Biom ist sehr heiß und hat kaum Wasser?",a:["Taiga","Wüste","Dschungel","Sumpf"],c:1,d:"easy",r:100,cat:"Biome"},
+  {q:"In welchem Biom wächst kein Gras?",a:["Ebene","Wüste","Sumpf","Wald"],c:1,d:"easy",r:100,cat:"Biome"},
+  {q:"Welcher Baum ist typisch für den Dschungel?",a:["Birke","Akazie","Dschungelbaum","Dunkelwald"],c:2,d:"easy",r:100,cat:"Biome"},
+  {q:"Was ist typisch für das Schneeland-Biom?",a:["Kakteen","Schnee & Eis","Sand","Pilze"],c:1,d:"easy",r:100,cat:"Biome"},
+  {q:"Welche Dimension gibt es außer der Oberwelt?",a:["Himmel & Nether","Nether & End","Mond & Sonne","Unterwelt & Himmel"],c:1,d:"easy",r:100,cat:"Dimensionen"},
+  {q:"Wie kommt man in den Nether?",a:["Durch ein Eisenportal","Durch ein Obsidianportal","Durch Wasser springen","Durch den End-Brunnen"],c:1,d:"easy",r:100,cat:"Dimensionen"},
+  {q:"Was braucht man, um ein Feuerstein zu erhalten?",a:["Kiesel + Eisen","Stein + Kohle","Feuer + Stein","Lava + Wasser"],c:0,d:"easy",r:100,cat:"Crafting"},
+  {q:"Welche maximale Tiefe gibt es in Minecraft seit 1.18?",a:["-64","0","-128","-256"],c:0,d:"easy",r:100,cat:"Basics"},
+  {q:"Was droopt ein Blaze?",a:["Blaze-Stab","Ghast-Träne","Magmacreme","Netherwarze"],c:0,d:"easy",r:100,cat:"Mobs"},
+  {q:"Welches Material ist am härtesten in Minecraft?",a:["Diamant","Obsidian","Eisen","Endstein"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Was bedeutet 'Spawn' in Minecraft?",a:["Sterben","Erscheinen/Geburtspunkt","Craften","Leveln"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Wie heißt das Minecraft-Gesicht-Maskottchen?",a:["Steve","Creeper","Enderman","Alex"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Welche Ressource braucht man für Diamanten zu finden?",a:["Steinspitzhacke","Eisenspitzhacke","Holzspitzhacke","Goldenspitzhacke"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Was ist Redstone ähnlich wie in der echten Welt?",a:["Wasser","Elektrizität","Gas","Magnete"],c:1,d:"easy",r:100,cat:"Redstone"},
+  {q:"Welches Tier kann man auf einem Pferd reiten?",a:["Kuh","Pferd/Esel","Schwein mit Sattel","Schaf"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Was frisst ein Huhn?",a:["Weizen","Samen","Karotte","Rübe"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Wie heißt der Spieler-Standard-Skin?",a:["Alex","Notch","Steve","Herobrine"],c:2,d:"easy",r:100,cat:"Basics"},
+  {q:"Was ist ein 'Spawn-Ei'?",a:["Ein Ei das Mobs erschafft","Ein normales Ei","Ein Drachonei","Ein Gänserei"],c:0,d:"easy",r:100,cat:"Basics"},
+  {q:"Was gibt Schafe, wenn man sie schert?",a:["Leder","Wolle","Federn","Fleisch"],c:1,d:"easy",r:100,cat:"Mobs"},
+  {q:"Welche Blume gibt roten Farbstoff?",a:["Löwenzahn","Mohn","Rose (Poppy)","Kornblume"],c:2,d:"easy",r:100,cat:"Basics"},
+  {q:"Wie viele Slots hat eine normale Truhe?",a:["18","27","36","54"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Was macht ein Amboss (Anvil)?",a:["Erze schmelzen","Items reparieren & umbenennen","Zaubertränke brauen","Blöcke brechen"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Welches Holz ist am hellsten?",a:["Eiche","Birke","Akazie","Dunkeleiche"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Wie viele Spielmodi hat Minecraft?",a:["3","4","5","6"],c:1,d:"easy",r:100,cat:"Basics"},
+  {q:"Was ist der 'Creative Mode'?",a:["Du hast alle Items unlimitiert","Du musst überleben","Du baust zusammen","Du kämpfst gegen andere"],c:0,d:"easy",r:100,cat:"Basics"},
+  {q:"Was passiert wenn man in die Leere (Void) fällt?",a:["Man teleportiert zurück","Man stirbt","Man verliert Hunger","Man wird eingefroren"],c:1,d:"easy",r:100,cat:"Basics"},
+
+  // ══════════════ MITTEL – $500 ══════════════
+
+  {q:"Welche Version brachte das Nether-Update?",a:["1.14","1.15","1.16","1.17"],c:2,d:"medium",r:500,cat:"Updates"},
+  {q:"Was ist 'Netherite' besser als?",a:["Eisen","Gold","Diamant","Obsidian"],c:2,d:"medium",r:500,cat:"Items"},
+  {q:"Wie stellt man Netherite-Ingot her?",a:["4x Ancient Debris schmelzen","4 Gold + 4 Ancient Debris","1 Ancient Debris + Gold","Nur im Nether craften"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Was ist 'Ancient Debris'?",a:["Alte Eisenerz","Seltenes Netherit-Erz","Ein fossiles Artefakt","Ein Nether-Mob"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Wie viele Bücherregale braucht man für Level-30-Zaubertisch?",a:["10","12","15","20"],c:2,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Was macht Enchantment 'Mending'?",a:["Repariert mit EXP","Erhöht Haltbarkeit","Verdoppelt Drops","Heilt Spieler"],c:0,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Welches Enchantment erhöht Schaden gegen Untote?",a:["Sharpness","Smite","Bane of Arthropods","Knockback"],c:1,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Was macht 'Silk Touch'?",a:["Drops verdoppeln","Blöcke ohne Drops fallen","Blöcke in Originalform droppen","Automatisch abbauen"],c:2,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Was macht 'Fortune'?",a:["Mehr EXP","Mehr Item-Drops","Mehr Geschwindigkeit","Mehr Haltbarkeit"],c:1,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Welches Enchantment lässt einen auf Wasser laufen?",a:["Frost Walker","Water Walk","Ice Stride","Aqua Affinity"],c:0,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Was ist ein 'Beacon' (Leuchtfeuer)?",a:["Ein Laternenpfosten","Ein mächtiger Buff-Block","Ein Nether-Portal","Ein Orientierungspunkt"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Wie aktiviert man einen Beacon?",a:["Diamant oben drauf","Pyramide aus Wertstoffen bauen","Lava darunter","Redstone anschließen"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Was ist ein 'Wither'?",a:["Eine Drachen-Art","Ein Boss-Mob aus 4 Seelen-Sand und 3 Wither-Köpfen","Ein Nether-Mob","Ein Enchantment-Effekt"],c:1,d:"medium",r:500,cat:"Mobs"},
+  {q:"Was droopt der Ender Dragon?",a:["Drachonei + viel EXP","Endstein","Dragon Breath","Elytra"],c:0,d:"medium",r:500,cat:"Mobs"},
+  {q:"Was ist 'Elytra'?",a:["Ein Schwert","Flügelrüstung zum Gleiten","Ein Helm","Ein Bogen"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Wo findet man Elytra?",a:["In Dungeons","In End Cities","Im Nether-Festung","Beim Händler"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Was macht ein Dispensar (Dispenser)?",a:["Items aufsammeln","Items abfeuern","Items lagern","Items schmelzen"],c:1,d:"medium",r:500,cat:"Redstone"},
+  {q:"Was ist ein 'Hopper'?",a:["Ein Mob","Eine Item-Transportmaschine","Ein Rüstungstyp","Ein Biom"],c:1,d:"medium",r:500,cat:"Redstone"},
+  {q:"Was macht ein Comparator in Redstone?",a:["Signal verstärken","Signale vergleichen/subtrahieren","Items sortieren","Türen öffnen"],c:1,d:"medium",r:500,cat:"Redstone"},
+  {q:"Wie viele Ticks hat eine Sekunde in Minecraft?",a:["10","20","30","50"],c:1,d:"medium",r:500,cat:"Basics"},
+  {q:"Was ist 'Chunk-Loading'?",a:["Minecraft lädt Chunks der Welt","Ein Redstone-System","Ein Mod","Ein Cheat"],c:0,d:"medium",r:500,cat:"Basics"},
+  {q:"Was ist 'Griefer' auf einem Server?",a:["Ein Farmer","Jemand der zerstört/nervt","Ein PvP-Profi","Ein Builder"],c:1,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was bedeutet 'TP-Kill'?",a:["Töten per Teleport-Trick","Teleport-Verbot","Team-Punkt-Kampf","Temp-Player-Kill"],c:0,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was ist ein 'Spawn-Schutz' auf Servern?",a:["Unfallschutz","Bereich um Spawn wo man nicht bauen/abbauen kann","Anti-Cheat","Lagschutz"],c:1,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was ist 'Essentials' auf Minecraft-Servern?",a:["Ein Spiel-Modus","Beliebtes Server-Plugin für Befehle",  "Ein Anti-Cheat","Ein Mod"],c:1,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was macht '/gamemode creative'?",a:["PvP aktivieren","Creative-Modus aktivieren","Gott-Modus","Fliegen aktivieren"],c:1,d:"medium",r:500,cat:"Commands"},
+  {q:"Opsucht ist ein Server aus welchem Land?",a:["Österreich","Schweiz","Deutschland","Niederlande"],c:2,d:"medium",r:500,cat:"Opsucht"},
+  {q:"Auf welcher Plattform ist Opsucht primär bekannt?",a:["Roblox","Minecraft","Fortnite","CS2"],c:1,d:"medium",r:500,cat:"Opsucht"},
+  {q:"Was ist typisch für Fraktions-Server?",a:["Alleine bauen","Gruppen kämpfen um Territorium","Minigames spielen","Creative Bauen"],c:1,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was ist 'Vanilla' Minecraft?",a:["Minecraft mit Mods","Minecraft ohne Mods/Plugins","Ein Spielmodus","Ein Biom"],c:1,d:"medium",r:500,cat:"Basics"},
+  {q:"Welcher Befehl gibt jemandem OP (Operator)?",a:["/op spieler","/give op spieler","/rank spieler op","/admin spieler"],c:0,d:"medium",r:500,cat:"Commands"},
+  {q:"Was ist 'WorldEdit'?",a:["Ein Welten-Generator","Ein Build-Plugin","Ein Anti-Cheat","Ein Economy-Plugin"],c:1,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was ist 'WorldGuard'?",a:["Anti-Cheat","Regions-Schutz-Plugin","World-Generator","Backup-System"],c:1,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was ist ein 'Gravel-Cannon'?",a:["Ein Kiesel-Mob","Eine Redstone-Waffe","Ein Biom","Ein Schaden-Effekt"],c:1,d:"medium",r:500,cat:"Redstone"},
+  {q:"Was ist TNT-Duping?",a:["TNT verdoppeln durch Bug/Exploit","TNT kopieren mit Creative","TNT craften","TNT deaktivieren"],c:0,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Welche Version fügte 'Bienen' hinzu?",a:["1.14","1.15","1.16","1.17"],c:1,d:"medium",r:500,cat:"Updates"},
+  {q:"Was kam mit Version 1.17?",a:["Nether Update","Caves & Cliffs (Teil 1)","Wild Update","Village & Pillage"],c:1,d:"medium",r:500,cat:"Updates"},
+  {q:"Was ist ein 'Pillager Outpost'?",a:["Dorfstruktur","Plünderer-Turm","Nether-Festung","End-City"],c:1,d:"medium",r:500,cat:"Basics"},
+  {q:"Was macht 'Respawn Anchor'?",a:["Respawn in Oberwelt","Respawn-Punkt im Nether setzen","Item respawnen","Spieler wiederbeleben"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Was ist 'Lodestone'?",a:["Magnetischer Kompass-Stein","Ein Edelstein","Eine Bombe","Ein Dekoblock"],c:0,d:"medium",r:500,cat:"Items"},
+  {q:"Welcher Mob patrouilliert durch Dörfer?",a:["Zombie","Iron Golem","Pillager","Witch"],c:1,d:"medium",r:500,cat:"Mobs"},
+  {q:"Wie heißt der Mob der Spieler verfolgt wenn man ihn anschaut?",a:["Creeper","Enderman","Spider","Shulker"],c:1,d:"medium",r:500,cat:"Mobs"},
+  {q:"Was sind 'Phantom'?",a:["Nether-Mobs","Fliegende Mobs die Spieler angreifen die nicht schlafen","End-Mobs","Wasser-Mobs"],c:1,d:"medium",r:500,cat:"Mobs"},
+  {q:"Was ist eine 'Pillager Raid'?",a:["Eine Server-Invasion","Angriff auf ein Dorf nach bestimmten Bedingungen","Ein Biom-Event","Ein PvP-Event"],c:1,d:"medium",r:500,cat:"Mobs"},
+  {q:"Welches Enchantment schützt vor Explosionen?",a:["Projectile Protection","Blast Protection","Fire Protection","Thorns"],c:1,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Was ist 'Knockback' als Enchantment?",a:["Schaden erhöhen","Gegner wegschubsen","Eigenen Schaden reduzieren","Schneller laufen"],c:1,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Was macht 'Looting'?",a:["Mehr EXP","Mehr Item-Drops von Mobs","Magnet-Effekt","Teleportation"],c:1,d:"medium",r:500,cat:"Enchanting"},
+  {q:"Wie heißt der End-Boss?",a:["Wither","Ender Dragon","Enderman","Shulker"],c:1,d:"medium",r:500,cat:"Mobs"},
+  {q:"Was ist 'Chorus Fruit'?",a:["Eine End-Frucht die teleportiert","Ein Nether-Gemüse","Ein Trank-Zuttat","Ein Mob-Drop"],c:0,d:"medium",r:500,cat:"Items"},
+  {q:"Welche Rüstung schützt am besten?",a:["Eisen","Gold","Diamant (ohne Netherite)","Kettenhemd"],c:2,d:"medium",r:500,cat:"Items"},
+  {q:"Was ist 'Soul Sand'?",a:["Ein normaler Sand","Sand der Spieler verlangsamt","Ein Tränke-Zuttat","Ein Baustoff"],c:1,d:"medium",r:500,cat:"Items"},
+  {q:"Was macht Soulsand im Wasser?",a:["Wasser kühlen","Aufwärtsstrom erschaffen","Wasser blockieren","Mobs töten"],c:1,d:"medium",r:500,cat:"Redstone"},
+
+  // ══════════════ SCHWER – $2000 ══════════════
+
+  {q:"Seit Version 1.18: Auf welcher Y-Koordinate spawnt Diamant am häufigsten?",a:["Y=12","Y=-54","Y=0","Y=16"],c:1,d:"hard",r:2000,cat:"Mining"},
+  {q:"Was ist 'XP-Farm' im technischen Sinne?",a:["Eine Farm für Extra-Pixel","Automatisierter Erfahrungspunkt-Farmaufbau","Ein Mod","Ein Plugin"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Was bedeutet 'Entity Cramming'?",a:["Zu viele Items auf einem Fleck","Zu viele Entities auf einem Block verursachen Schaden","Chunk-Überladung","Lag durch Redstone"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Was ist 'Zero-Tick' in Minecraft?",a:["Nullpunkt-Redstone","Ein Exploit um Pflanzen sofort wachsen zu lassen","Null Spieler online","Eine Timer-Funktion"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Was ist ein 'Slime-Chunk'?",a:["Ein grüner Chunk","Bestimmte Chunks wo Slimes spawnen","Ein Mod-Chunk","Ein Biom"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Wie nennt man ein vollautomatisches Item-Sortiersystem?",a:["Hopper-Sorter","Auto-Chest","Item-Filter","Comparator-Chain"],c:0,d:"hard",r:2000,cat:"Redstone"},
+  {q:"Was ist 'Carpet Duplication'?",a:["Teppich-Herstellung","Ein Exploit zum Item-duplizieren","Ein Dekotrend","Ein Cheat-Code"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Was ist der maximale Zauberkraft-Level in Minecraft?",a:["30","50","100","255"],c:0,d:"hard",r:2000,cat:"Enchanting"},
+  {q:"Was passiert wenn man 'Efficiency V' + 'Haste II' (Beacon) kombiniert?",a:["Doppelter Schaden","Sehr schnelles Abbauen","Automatisches Abbauen","Silk-Touch-Effekt"],c:1,d:"hard",r:2000,cat:"Enchanting"},
+  {q:"Was ist 'Raid-Farm'?",a:["Farmer für Raids","Automatisierte Pillager-Raid-Farm für Drops","Ein Biom","Ein Plugin"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Was ist 'Enderman-Farm'?",a:["Enderman-Züchter","Massiv EXP- und Ender-Pearl-Farm im End","Ein End-Biom","Eine Portal-Farm"],c:1,d:"hard",r:2000,cat:"Technik"},
+  {q:"Was bedeutet 'MSPT' bei Minecraft-Servern?",a:["Milliseconds per Tick – Server-Performance-Messung","Mob Spawn per Tick","Map Size per Tab","Monster Spawn Proximity Timer"],c:0,d:"hard",r:2000,cat:"Server"},
+  {q:"Welche Permissionssystem ist der Standard auf modernen Servern?",a:["GroupManager","PermissionsEx","LuckPerms","bPermissions"],c:2,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist 'Paper' vs 'Spigot'?",a:["Zwei Mods","Fork von Spigot mit mehr Performance-Optimierungen","Zwei Biome","Zwei Versionen"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist ein 'BungeeCord'?",a:["Ein Mod","Proxy-Software um mehrere Minecraft-Server zu verbinden","Ein Plugin","Eine Spielmechanik"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was macht '/summon' in Minecraft?",a:["Teleportiert Spieler","Erschafft eine Entität","Gibt Items","Setzt Wetter"],c:1,d:"hard",r:2000,cat:"Commands"},
+  {q:"Was ist 'NBT' in Minecraft?",a:["Named Binary Tag – Datenspeicher für Entities/Items","Nether Block Type","Natural Biome Tag","Nether Blaze Tower"],c:0,d:"hard",r:2000,cat:"Technik"},
+  {q:"Wie lautet der Befehl um die Zeit auf Tag zu setzen?",a:["/time set 0","/time day","/settime 1000","/day on"],c:0,d:"hard",r:2000,cat:"Commands"},
+  {q:"Was ist 'Flying Machine' in Minecraft?",a:["Ein Flugzeug-Mod","Redstone-Maschine die sich selbst bewegt (Slime/Honey)","Ein Flugobjekt","Ein End-Mob"],c:1,d:"hard",r:2000,cat:"Redstone"},
+  {q:"Was bedeutet 'Lag' auf einem Minecraft-Server?",a:["Zu wenig Spieler","Verzögerungen durch TPS-Drop","Grafik-Fehler","Falsche Version"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Auf welchem Port läuft ein Standard-Minecraft-Server?",a:["80","443","25565","8080"],c:2,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist 'Grief-Protection' auf Servern?",a:["Griefer-Verbot","Plugin/System das Bauten schützt","Anti-Cheat","Backup-System"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist 'Economy' auf Minecraft-Servern?",a:["Ein Spiel-Modus","Ein virtuelles Geld/Handel-System","Ein Plugin-Typ","Ein Rang-System"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist der Unterschied zwischen Java und Bedrock Edition?",a:["Keine","Java = PC/Mac, Bedrock = Konsole/Mobile/Win10","Bedrock ist moderner","Java hat mehr Mobs"],c:1,d:"hard",r:2000,cat:"Basics"},
+  {q:"Welche Website ist die offizielle Minecraft-Seite?",a:["minecraft.com","mojang.com","minecraft.net","mc.net"],c:2,d:"hard",r:2000,cat:"Basics"},
+  {q:"Was ist 'Optifine'?",a:["Ein Anti-Cheat","Performance- und Grafik-Mod für Java","Ein Server-Plugin","Ein Mod-Manager"],c:1,d:"hard",r:2000,cat:"Mods"},
+  {q:"Was ist 'Forge'?",a:["Ein Mod-Loader für Java Minecraft","Ein Server-Typ","Ein Biom","Ein Enchantment"],c:0,d:"hard",r:2000,cat:"Mods"},
+  {q:"Was ist 'Fabric'?",a:["Ein Texture-Pack","Alternativer leichter Mod-Loader","Ein Biom","Ein Server"],c:1,d:"hard",r:2000,cat:"Mods"},
+  {q:"Was ist ein 'Datapack'?",a:["Ein Texture-Pack","Vanilla-kompatible Erweiterungen ohne Mods","Ein Server-Plugin","Ein Mod"],c:1,d:"hard",r:2000,cat:"Mods"},
+  {q:"Wann wurde Microsoft Eigentümer von Mojang?",a:["2012","2014","2016","2018"],c:1,d:"hard",r:2000,cat:"Geschichte"},
+  {q:"Wie viele Kopien hat Minecraft insgesamt verkauft (ca. 2023)?",a:["100 Mio","180 Mio","238 Mio","500 Mio"],c:2,d:"hard",r:2000,cat:"Geschichte"},
+  {q:"Wer ist 'Jens Bergensten' (Jeb)?",a:["CEO von Mojang","Lead-Developer von Minecraft","Minecraft Erfinder","Marketing Chef"],c:1,d:"hard",r:2000,cat:"Geschichte"},
+  {q:"Was war der ursprüngliche Name von Minecraft?",a:["MineCave","Cave Game","Block World","Dig & Build"],c:1,d:"hard",r:2000,cat:"Geschichte"},
+  {q:"Wann war die offizielle 1.0 Release von Minecraft?",a:["2010","2011","2012","2013"],c:1,d:"hard",r:2000,cat:"Geschichte"},
+  {q:"Was ist 'Herobrine'?",a:["Ein echter Mob","Eine bekannte Urban Legend / Creepypasta","Ein Cheat-Code","Ein Mod-Charakter"],c:1,d:"hard",r:2000,cat:"Geschichte"},
+  {q:"Was ist ein 'Speedrun' in Minecraft?",a:["Schnell bauen","Das Spiel so schnell wie möglich durchspielen (Ender Dragon töten)","Schneller Abbau","Rennen zwischen Spielern"],c:1,d:"hard",r:2000,cat:"Basics"},
+  {q:"Was ist 'RSG' beim Speedrunning?",a:["Random Seed Glitchless","Real Speed Game","Random Spawn Ground","Run Stop Go"],c:0,d:"hard",r:2000,cat:"Basics"},
+  {q:"Welches ist das seltenste natürliche Biom?",a:["Wüste","Modified Jungle Edge (früher)","Ozean","Taiga"],c:1,d:"hard",r:2000,cat:"Biome"},
+  {q:"Was ist 'Deep Dark'?",a:["Ein Biom mit Warden und Ancient City","Ein Nether-Biom","Ein Mod","Ein End-Bereich"],c:0,d:"hard",r:2000,cat:"Biome"},
+  {q:"Was ist der 'Warden'?",a:["Ein Guardian-Mob","Blinder Boss-Mob im Deep Dark","Ein Nether-Boss","Ein End-Mob"],c:1,d:"hard",r:2000,cat:"Mobs"},
+  {q:"Wie spürt der Warden seine Umgebung?",a:["Sehen","Vibration/Geräusch","Geruch","Temperatur"],c:1,d:"hard",r:2000,cat:"Mobs"},
+  {q:"Was ist 'Allay'?",a:["Ein Angriffs-Mob","Ein freundlicher Mob der Items sammelt","Ein End-Mob","Ein Nether-Mob"],c:1,d:"hard",r:2000,cat:"Mobs"},
+  {q:"Was ist 'Sculk' in Minecraft?",a:["Ein Pilz","Deep-Dark-Gestein das Vibrationen überträgt","Ein Mob","Ein Enchantment"],c:1,d:"hard",r:2000,cat:"Blocks"},
+  {q:"Seit welcher Version gibt es 'Archaeology'?",a:["1.19","1.20","1.21","1.18"],c:1,d:"hard",r:2000,cat:"Updates"},
+  {q:"Was ist 'Cherry Blossom' Biom?",a:["Ein japanisches Biom mit rosa Bäumen (ab 1.20)","Ein Mod","Ein Texture Pack","Ein End-Biom"],c:0,d:"hard",r:2000,cat:"Biome"},
+  {q:"Was ist 'Sniffer'?",a:["Ein Mob der Samen ausgräbt (ab 1.20)","Ein Anti-Cheat","Ein Plugin","Ein Detector"],c:0,d:"hard",r:2000,cat:"Mobs"},
+  {q:"Was ist 'Trial Chamber'?",a:["Eine neue Dungeon-Struktur (ab 1.21)","Ein Mod","Ein Servertyp","Ein Biom"],c:0,d:"hard",r:2000,cat:"Updates"},
+
+  // ══════════════ OPSUCHT – $500/$2000 ══════════════
+
+  {q:"Was ist der Gamemode-Fokus von Opsucht?",a:["Creative","Survival/Fraktionen/PvP","Minigames","Roleplay"],c:1,d:"medium",r:500,cat:"Opsucht"},
+  {q:"Welche Art von Community ist Opsucht?",a:["Englischsprachig","Deutschsprachige Minecraft-Community","Internationale","Japanische"],c:1,d:"medium",r:500,cat:"Opsucht"},
+  {q:"Was ist typisch für einen deutschen Minecraft-Server?",a:["Englische Regeln","Deutsche Sprache und Community","Kein PvP","Nur Bedrock"],c:1,d:"medium",r:500,cat:"Opsucht"},
+  {q:"Was bedeutet 'Faction' auf einem Server?",a:["Spieler-Gruppe/Klan","Ein Biom","Ein Plugin-Typ","Ein Spielmodus"],c:0,d:"medium",r:500,cat:"Multiplayer"},
+  {q:"Was ist 'GriefPrevention' auf Servern?",a:["Anti-Cheat","Claim-System um Bauten zu schützen","Bannsystem","Backup"],c:1,d:"medium",r:500,cat:"Server"},
+  {q:"Was ist die Aufgabe eines 'Moderators' auf einem Server?",a:["Bauen","Regeln durchsetzen und Spielern helfen","Coden","Textures erstellen"],c:1,d:"medium",r:500,cat:"Server"},
+  {q:"Was ist ein 'Donator' auf einem Minecraft-Server?",a:["Ein Spieler der spendet und Vorteile bekommt","Ein Admin","Ein Moderator","Ein Anfänger"],c:0,d:"medium",r:500,cat:"Server"},
+  {q:"Was macht ein 'Anti-Cheat' auf Servern?",a:["Mods blockieren","Cheater/Hacker erkennen und bannen","Lag reduzieren","Backups erstellen"],c:1,d:"medium",r:500,cat:"Server"},
+  {q:"Was ist '/home' auf Servern?",a:["Teleport zum Spawnpunkt","Teleport zu gesetztem Heimatort","Inventar öffnen","Rang anzeigen"],c:1,d:"medium",r:500,cat:"Commands"},
+  {q:"Was ist '/tpa' auf Servern?",a:["Teleport-Anfrage an Spieler","Automatisches Teleportieren","Admin-Teleport","Item-Transfer"],c:0,d:"medium",r:500,cat:"Commands"},
+  {q:"Was ist 'Fly-Hacking'?",a:["Normales Fliegen mit Elytra","Illegales Fliegen durch Cheats","Creative-Modus Fliegen","Beacon-Effekt"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist 'KillAura'?",a:["Ein Enchantment","Ein Hack der automatisch Spieler angreift","Ein Effekt","Ein Mob"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist 'Xray' im Kontext Cheaten?",a:["Röntgenstrahlen im Spiel","Hack/Mod der Erze durch Blöcke sichtbar macht","Ein Texture-Pack","Ein Biom"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Warum werden Spieler auf Servern 'IP-gebannt'?",a:["Bei normalen Regelverstößen","Bei schweren wiederholten Verstößen/Cheaten","Aus Spaß","Bei Inaktivität"],c:1,d:"hard",r:2000,cat:"Server"},
+  {q:"Was ist 'Duplication-Glitch'?",a:["Item-Verdoppelung durch einen Bug","Normales Crafting","Ein Biom-Fehler","Ein Render-Bug"],c:0,d:"hard",r:2000,cat:"Technik"},
+];
+
+</script>
 <script>
 'use strict';
 
